@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>소비와 심리 문제은행</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--text:#1d2330;--muted:#667085;--line:#e3e6eb;--accent:#1f4e79;--accent-soft:#e8eff7;--ok:#1a7f4b;--ok-soft:#e6f4ec;--bad:#b42318;--bad-soft:#fdecea}
+@media (prefers-color-scheme:dark){:root{--bg:#14171c;--card:#1d2128;--text:#e8eaee;--muted:#9aa3b2;--line:#2e343e;--accent:#7fb2e5;--accent-soft:#1f2b3a;--ok:#5cc98d;--ok-soft:#173327;--bad:#f08b80;--bad-soft:#3a1d1b}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;line-height:1.55}
+.wrap{max-width:760px;margin:0 auto;padding:20px 16px 60px}
+header h1{font-size:1.35rem;margin:0 0 4px}
+header p{margin:0;color:var(--muted);font-size:.9rem}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:16px}
+.label{font-size:.8rem;color:var(--muted);margin:0 0 8px;font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:transparent;color:var(--text);border-radius:999px;padding:7px 14px;font-size:.92rem;cursor:pointer}
+.chip.on{background:var(--accent);border-color:var(--accent);color:var(--card)}
+.row{display:flex;gap:16px;flex-wrap:wrap;margin-top:14px}
+.row > div{flex:1;min-width:200px}
+.btn{border:0;background:var(--accent);color:var(--card);font-weight:700;border-radius:10px;padding:12px 18px;font-size:1rem;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--line)}
+.btn:disabled{opacity:.4;cursor:default}
+.start{width:100%;margin-top:16px}
+.stats{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;font-size:.88rem;color:var(--muted)}
+.bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin:10px 0 4px}
+.bar i{display:block;height:100%;background:var(--accent);width:0}
+.meta{display:flex;justify-content:space-between;font-size:.85rem;color:var(--muted)}
+.qtext{font-size:1.08rem;font-weight:700;margin:14px 0 14px}
+.qtext b{color:var(--accent);margin-right:6px}
+.opt{display:block;width:100%;text-align:left;background:transparent;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:8px;font-size:.98rem;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt:disabled{cursor:default}
+.opt.correct{background:var(--ok-soft);border-color:var(--ok);font-weight:600}
+.opt.wrong{background:var(--bad-soft);border-color:var(--bad)}
+.feedback{border-radius:10px;padding:12px 14px;margin-top:6px;font-size:.95rem}
+.feedback.ok{background:var(--ok-soft)}
+.feedback.no{background:var(--bad-soft)}
+.feedback strong{display:block;margin-bottom:4px}
+.feedback small{color:var(--muted)}
+.nav{display:flex;gap:8px;margin-top:16px}
+.nav .btn{flex:1}
+.score{font-size:2.4rem;font-weight:800;color:var(--accent);margin:4px 0}
+.list{margin-top:12px;padding:0;list-style:none}
+.list li{border-top:1px solid var(--line);padding:10px 0;font-size:.92rem}
+.list li span{color:var(--muted)}
+.hidden{display:none}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.link{white-space:nowrap;background:none;border:0;color:var(--accent);cursor:pointer;font-size:.9rem;padding:4px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>소비와 심리 문제은행</h1>
+      <p>중간고사 대비 객관식 65문항 · 강의교안 0~7-3강</p>
+    </div>
+    <button class="link hidden" id="homeBtn">처음으로</button>
+  </header>
+
+  <section id="setup">
+    <div class="panel">
+      <p class="label">범위</p>
+      <div class="chips" id="secChips"></div>
+      <div class="row">
+        <div>
+          <p class="label">출제 대상</p>
+          <div class="chips" id="poolChips"></div>
+        </div>
+        <div>
+          <p class="label">순서</p>
+          <div class="chips" id="orderChips"></div>
+        </div>
+      </div>
+      <button class="btn start" id="startBtn">시작하기</button>
+      <div class="stats" id="stats"></div>
+    </div>
+  </section>
+
+  <section id="quiz" class="hidden">
+    <div class="panel">
+      <div class="meta"><span id="pos"></span><span id="live"></span></div>
+      <div class="bar"><i id="prog"></i></div>
+      <div class="qtext" id="qtext"></div>
+      <div id="opts"></div>
+      <div id="fb"></div>
+      <div class="nav">
+        <button class="btn ghost" id="prevBtn">이전</button>
+        <button class="btn" id="nextBtn">다음</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="result" class="hidden">
+    <div class="panel">
+      <p class="label">결과</p>
+      <div class="score" id="score"></div>
+      <div id="resultMsg" class="meta"></div>
+      <div class="nav">
+        <button class="btn ghost" id="retryWrongBtn">틀린 문제 다시 풀기</button>
+        <button class="btn" id="againBtn">처음으로</button>
+      </div>
+      <ul class="list" id="wrongList"></ul>
+    </div>
+  </section>
+</div>
+
+<script>
+const Q = [{"n": 1, "s": "1~3강", "q": "1879년 독일 라이프치히 대학에 최초의 심리실험실을 세운 심리학의 창시자는?", "o": ["윌리엄 제임스", "빌헬름 분트", "존 왓슨", "지그문트 프로이트"], "a": 1, "e": "분트, 1879년 라이프치히 최초 심리실험실", "l": "1강"}, {"n": 2, "s": "1~3강", "q": "이미 밝혀진 여러 연구결과 수치를 통계적 절차로 재가공하여 하나의 일반적 결론을 도출하는 자료처리 방법은?", "o": ["내용분석", "사례연구", "통계분석", "메타분석"], "a": 3, "e": "기존 연구결과 통합 = 메타분석. 통계분석은 자기 자료의 평균·ANOVA 등", "l": "3강"}, {"n": 3, "s": "1~3강", "q": "\"전체는 부분의 합과 다르다\"라는 말과 관련된 학파와 그 학파의 주된 관심영역을 올바르게 짝지은 것은?", "o": ["행동주의 – 학습", "정신분석학 – 무의식", "형태주의 – 지각", "기능주의 – 의식"], "a": 2, "e": "형태주의(게슈탈트)의 관심영역은 지각", "l": "1강"}, {"n": 4, "s": "1~3강", "q": "존 왓슨의 행동주의에 대한 설명으로 옳은 것은?", "o": ["관찰 가능한 행동에 관심을 두고, 환경이 습관을 강화함으로써 행동이 만들어진다고 보았다.", "내성법으로 피험자의 주관적 연상을 자기보고하게 했다.", "인간 정신의 대부분은 무의식이라고 보았다.", "의식의 전체적인 기능이 중요하다고 보았다."], "a": 0, "e": "② 분트 ③ 프로이트 ④ 제임스", "l": "1강"}, {"n": 5, "s": "1~3강", "q": "인지심리학에 대한 설명으로 틀린 것은?", "o": ["1950~60년대에 탄생했다.", "인간을 정보처리자로 간주한다.", "내성법을 주된 연구방법론으로 채택했다.", "구성주의의 연구주제를 부활시켰다."], "a": 2, "e": "인지심리학은 '실험' 방법론을 채택해 객관성을 확보했다. 내성법은 분트", "l": "1강"}, {"n": 6, "s": "1~3강", "q": "미국에서 소비자심리학 분과가 설립된 시기와 순서로 옳은 것은?", "o": ["1950년, 미국심리학회 11번째 분과", "1960년, 미국심리학회 23번째 분과", "1979년, 미국심리학회 23번째 분과", "1999년, 미국심리학회 11번째 분과"], "a": 1, "e": "1960년 미국심리학회 23번째 분과", "l": "1강"}, {"n": 7, "s": "1~3강", "q": "한국소비자·광고심리학회의 설립에 대한 설명으로 옳은 것은?", "o": ["1999년, 한국심리학회의 11번째 학회", "1990년, 한국심리학회의 11번째 학회", "1999년, 한국심리학회의 23번째 학회", "1960년, 한국심리학회의 23번째 학회"], "a": 0, "e": "1999년 한국심리학회 11번째 학회. 미국(1960·23번째)과 숫자를 바꾸는 함정 주의", "l": "1강"}, {"n": 8, "s": "1~3강", "q": "무의식을 중시하며 무의식이 꿈·말실수·매너리즘으로 표현된다고 본 인물은?", "o": ["빌헬름 분트", "막스 베르트하이머", "지그문트 프로이트", "윌리엄 제임스"], "a": 2, "e": "프로이트 정신분석학", "l": "1강"}, {"n": 9, "s": "1~3강", "q": "강의에서 제시한 소비자행동의 종합적 정의로 가장 적절한 것은?", "o": ["상품을 구매하는 순간의 물리적 행동만을 말한다.", "획득부터 사용까지의 활동이며, 폐기는 제외된다.", "획득·소비부터 폐기까지의 물리적 활동과 그 전후의 심리적 의사결정과정을 포함한다.", "심리적 의사결정과정은 제외하고 관찰 가능한 행동만 포함한다."], "a": 2, "e": "획득·소비부터 폐기까지 + 전후의 심리적 의사결정과정", "l": "2강"}, {"n": 10, "s": "1~3강", "q": "소비자행동의 본질에 포함되는 내용이 아닌 것은?", "o": ["태도와 태도변화 같은 인지적 활동", "사용 후 평가를 재구매에 피드백하는 활동", "불매운동·소비자주권운동", "기업의 생산원가 결정 활동"], "a": 3, "e": "본질에는 인지적 활동, 피드백, 집단·사회적 활동이 포함. 생산원가는 기업 활동", "l": "2강"}, {"n": 11, "s": "1~3강", "q": "소비자행동의 일반적 모형에서 '외적 요인(자극)'에 해당하지 않는 것은?", "o": ["준거집단", "성격", "하위문화", "경제 동향"], "a": 1, "e": "성격은 내적 요인", "l": "2강"}, {"n": 12, "s": "1~3강", "q": "소비자행동의 일반적 모형에서 '보이지 않는 반응'에 해당하는 것은?", "o": ["태도변화", "점포 방문", "구매량", "제품 선택"], "a": 0, "e": "방문·구매량·선택은 보이는 반응", "l": "2강"}, {"n": 13, "s": "1~3강", "q": "EBM 모델에 대한 설명으로 옳은 것은?", "o": ["자극과 반응만으로 구성된 단순모형이다.", "특정 구매행동이 어떻게 형성되었는가에 초점을 둔 포괄적 의사결정모형이다.", "소비자 행동에 대한 설명력이 낮다는 한계가 있다.", "구매 후 행동은 다루지 않는다."], "a": 1, "e": "EBM은 포괄적 의사결정모형, 설명력이 높음", "l": "2강"}, {"n": 14, "s": "1~3강", "q": "수업용 소비자심리학 모델에서 '정보처리과정'에 포함되지 않는 것은?", "o": ["노출", "대안의 평가", "기억", "학습"], "a": 1, "e": "대안의 평가는 의사결정과정. 정보처리과정은 노출·주의·지각·기억·학습", "l": "2강"}, {"n": 15, "s": "1~3강", "q": "자이가르닉 효과의 사례로 보기 어려운 것은?", "o": ["주문을 계산 전까지 잘 기억하는 식당 종업원", "결정적 장면 직전에 '잠시 중단'하는 방송", "브랜드명을 숨긴 티저광고", "비슷한 항목 중 독특한 항목이 더 잘 기억되는 현상"], "a": 3, "e": "폰 레스토프 효과에 대한 설명", "l": "2-1강, 6-2강"}, {"n": 16, "s": "1~3강", "q": "티저광고에 대한 설명으로 틀린 것은?", "o": ["첫 광고에서 브랜드명과 가격을 모두 공개한 뒤 점차 정보를 줄여 나간다.", "불완전한 정보를 제공해 궁금증을 유발한다.", "'teaser'는 놀려대는 사람이라는 뜻이다.", "인간의 호기심에 호소하는 광고이다."], "a": 0, "e": "브랜드명을 숨기고 시작해 마지막에 공개하는 단계적 노출", "l": "2-1강"}, {"n": 17, "s": "1~3강", "q": "질적 연구의 특성으로 옳은 것은?", "o": ["특정 가설을 통계적으로 검증하기 위해 설계한다.", "정의되지 않은 문제에 통찰을 주기 위해 설계되며, 소수 사례로 주관적 특성을 강조한다.", "표본이 모집단을 잘 대표해야 한다.", "결과를 일반화하기 쉽다."], "a": 1, "e": "①③은 양적 연구, 질적 연구는 일반화가 어렵다", "l": "3강"}, {"n": 18, "s": "1~3강", "q": "하루를 재구성하여 사람들이 시간을 보내는 유형과 각 경험에 대한 느낌을 추적하는 질적 연구 방법은?", "o": ["문화기술지적 연구", "담론분석", "사례연구", "일상재구성법(DRM)"], "a": 3, "e": "Day Reconstruction Method", "l": "3강"}, {"n": 19, "s": "1~3강", "q": "FGI(Focus Group Interview)에 대한 설명으로 옳은 것은?", "o": ["6~8명의 참여자가 진행자의 진행에 맞추어 자유롭게 의견을 나눈다.", "연구자와 응답자가 1:1로 진행하는 면접이다.", "다수의 의견이므로 별도 검증 없이 일반화할 수 있다.", "양적 연구의 자료처리 방법이다."], "a": 0, "e": "FGI는 6~8명, 다수 의견이므로 일반화에는 검증 필요", "l": "3강"}, {"n": 20, "s": "1~3강", "q": "양적 연구와 질적 연구 모두에서 활용이 가능하며, 부호화의 정교함이 요구되는 자료수집법은?", "o": ["관찰법", "심층면접", "FGI", "내용분석"], "a": 3, "e": "내용분석: 양적·질적 모두 활용, 부호화의 정교함 요구", "l": "3강"}, {"n": 21, "s": "4~5강", "q": "소비자 정보처리 과정의 순서로 옳은 것은?", "o": ["주의 → 노출 → 이해 → 수용 → 보존", "노출 → 이해 → 주의 → 보존 → 수용", "노출 → 주의 → 이해 → 수용 → 보존", "노출 → 주의 → 수용 → 이해 → 보존"], "a": 2, "e": "노출 → 주의 → 이해 → 수용 → 보존", "l": "4-1강"}, {"n": 22, "s": "4~5강", "q": "소비자 정보처리의 일반적 특성으로 볼 수 없는 것은?", "o": ["소비자는 모든 정보를 같은 깊이로 처리한다.", "정보처리 능력은 유한하다.", "기억은 정보처리 전 과정에 영향을 미친다.", "정보처리는 다분히 상황중심적이다."], "a": 0, "e": "능력은 유한하고 상황중심적이다", "l": "4-1강"}, {"n": 23, "s": "4~5강", "q": "자신에게 필요한 정보에만 의식적으로 자신을 노출시키는 노출 유형은?", "o": ["의도적 노출", "우연적 노출", "선택적 노출", "식역하 노출"], "a": 2, "e": "의도적 = 목적지향적 탐색, 우연적 = 의지와 무관", "l": "4-2강"}, {"n": 24, "s": "4~5강", "q": "뇌의 변연계에서 처리되어 감정을 즉각 자극하거나 차분한 느낌을 불러일으키는 감각은?", "o": ["청각", "후각", "미각", "촉각"], "a": 1, "e": "후각(향기)은 변연계에서 처리", "l": "4-2강"}, {"n": 25, "s": "4~5강", "q": "'주의'의 두 가지 특성으로 옳은 것은?", "o": ["선택적 특성, 집중 특성", "일시성, 총합성", "주관성, 선택성", "근접성, 유사성"], "a": 0, "e": "②③는 지각의 특징, ④는 게슈탈트 원리", "l": "4-2강"}, {"n": 26, "s": "4~5강", "q": "강의에서 제시한 '소비자의 주의에 영향을 주는 요인'이 아닌 것은?", "o": ["신기성", "대비", "운동", "할인율"], "a": 3, "e": "10가지 요인: 신기성·생생함·색채·관련성·브랜드 아이덴티티·대비·크기·강도·위치·운동", "l": "4-2강"}, {"n": 27, "s": "4~5강", "q": "'지각'의 정의로 옳은 것은?", "o": ["자극에 대한 감각기관의 즉각적이고 직접적인 반응", "선택적으로 감각기관에 수용된 정보를 체제화·통합하고 의미 있게 해석하는 과정", "감각기관에 들어오는 정보 그 자체", "절대역 아래의 자극이 행동에 영향을 주는 현상"], "a": 1, "e": "① 감각 ③ 자극 ④ 식역하 지각", "l": "5-1강"}, {"n": 28, "s": "4~5강", "q": "절대역은 탐지 정확률이 몇 %인 자극 강도로 정의되는가?", "o": ["25%", "75%", "50%", "100%"], "a": 2, "e": "탐지 정확률 50%", "l": "5-1강"}, {"n": 29, "s": "4~5강", "q": "변화가 없는 일정한 자극조건에서 감각순응이 일어날 때 절대역의 변화는?", "o": ["절대역이 증가하여 감각이 둔해진다.", "절대역이 감소하여 감각이 예민해진다.", "절대역은 변하지 않는다.", "차이역만 감소한다."], "a": 0, "e": "순응하면 절대역 증가 = 둔해짐", "l": "5-1강"}, {"n": 30, "s": "4~5강", "q": "무게의 JND가 2%라고 할 때, 500g 제품의 무게 변화를 소비자가 감지하려면 최소 몇 g이 달라져야 하는가?", "o": ["1g", "2g", "5g", "10g"], "a": 3, "e": "ΔI = K × I = 0.02 × 500g = 10g", "l": "5-1강"}, {"n": 31, "s": "4~5강", "q": "과자 회사가 가격은 그대로 두고 용량을 줄이면서 소비자가 알아차리지 못하게 하려면?", "o": ["JND 이상으로 크게 줄인다.", "JND 이하로 줄인다.", "절대역 이상으로 줄인다.", "식역하 광고로 알린다."], "a": 1, "e": "부정적 변화는 JND 이하(변화 인지 회피)", "l": "5-1강"}, {"n": 32, "s": "4~5강", "q": "식역하 지각과 관련한 광고의 유형으로 제시되지 않은 것은?", "o": ["간결하게 제시된 시각 자극", "저음에서 빠른 속도로 제시되는 청각 메시지", "인쇄광고에 숨겨진 이미지·단어", "신문 전면광고"], "a": 3, "e": "신문 전면광고는 감각투입을 늘리는 사례", "l": "5-1강"}, {"n": 33, "s": "4~5강", "q": "나비곡선에 대한 설명으로 옳은 것은?", "o": ["자극에 대한 선호는 적응수준보다 약간 높거나 낮은 지점에서 가장 크다.", "선호는 적응수준에서 가장 크다.", "자극수준이 적응수준에서 멀어질수록 선호는 증가한다.", "선호는 자극수준과 무관하다."], "a": 0, "e": "적응수준에서는 약간 감소, 멀어질수록 감소", "l": "5-1강"}, {"n": 34, "s": "4~5강", "q": "지각의 네 가지 특징에 해당하지 않는 것은?", "o": ["폐쇄성", "주관성", "일시성", "총합성"], "a": 0, "e": "4특징 = 주관성·선택성·일시성·총합성. 폐쇄성은 게슈탈트 원리", "l": "5-2강"}, {"n": 35, "s": "4~5강", "q": "개인의 가치체계에 역행하는 자극을 차단하는 것을 무엇이라 하는가?", "o": ["지각의 과부하", "선별적 감지", "지각적 방어", "지각적 추론"], "a": 2, "e": "선별적 감지는 가치와 일치하는 자극을 빠르게 지각", "l": "5-2강"}, {"n": 36, "s": "4~5강", "q": "지각의 '일시성'이 주는 광고 시사점으로 옳은 것은?", "o": ["일시적인 장기간 집중 광고가 효과적이다.", "일정한 간격을 두고 반복하는 광고가 효과적이다.", "단 한 번의 대형 광고가 효과적이다.", "광고가 반복될수록 역효과만 생긴다."], "a": 1, "e": "일정 간격을 둔 반복 광고", "l": "5-2강"}, {"n": 37, "s": "4~5강", "q": "소비자가 광고, 상점로고, 제품디자인 같은 개별 자극을 통합해 기업 전체의 이미지로 받아들이는 지각의 특징은?", "o": ["주관성", "선택성", "일시성", "총합성"], "a": 3, "e": "총합성", "l": "5-2강"}, {"n": 38, "s": "4~5강", "q": "완전한 광고보다 불완전한 광고가 더 잘 회상되는 현상과 관련된 게슈탈트 원리는?", "o": ["근접성의 법칙", "유사성의 법칙", "폐쇄성의 법칙", "전경과 배경의 원리"], "a": 2, "e": "폐쇄성: 빈 곳을 채우려는 성향, 불완전한 광고가 더 잘 회상", "l": "5-2강"}, {"n": 39, "s": "4~5강", "q": "\"비싼 제품이니 품질도 좋을 것이다\"라고 생각하는 것은 무엇의 사례인가?", "o": ["지각적 범주화", "지각적 추론", "선별적 감지", "감각순응"], "a": 1, "e": "다른 것으로부터 추리 = 지각적 추론", "l": "5-2강"}, {"n": 40, "s": "4~5강", "q": "감각과 자극의 관계에 대한 설명으로 틀린 것은?", "o": ["최초 자극이 강할수록 변화를 감지하는 데 필요한 자극량(JND)은 작아진다.", "감각은 에너지 변화에 의존한다.", "완벽하게 변하지 않는 환경에서는 감각기능이 발휘되지 못한다.", "감각 투입이 감소하면 변화를 탐지하는 민감성은 증가한다."], "a": 0, "e": "베버 법칙: 최초 자극이 강할수록 JND도 비례해서 커진다", "l": "5-1강"}, {"n": 41, "s": "6~7강", "q": "기억의 3단계를 순서대로 나열한 것은?", "o": ["저장 → 부호화 → 인출", "부호화 → 인출 → 저장", "인출 → 부호화 → 저장", "부호화 → 저장 → 인출"], "a": 3, "e": "부호화 → 저장 → 인출", "l": "6-1강"}, {"n": 42, "s": "6~7강", "q": "청각정보에 대한 감각기억을 무엇이라 하는가?", "o": ["영상기억(iconic memory)", "잔향기억(echoic memory)", "작업기억", "절차적 기억"], "a": 1, "e": "영상기억은 시각", "l": "6-1강"}, {"n": 43, "s": "6~7강", "q": "George Miller(1956)가 제시한 단기기억의 처리 용량은?", "o": ["7±2 청크", "5±2 청크", "9±2 청크", "제한 없음"], "a": 0, "e": "The magic number seven, plus or minus two", "l": "6-1강"}, {"n": 44, "s": "6~7강", "q": "작업기억에서 우세한 부호화 방식과 그 마케팅 시사점을 올바르게 짝지은 것은?", "o": ["시각적 부호화 – 패키지 디자인", "의미적 부호화 – 슬로건", "청각적 부호화 – 상표명 선정", "후각적 부호화 – 매장 향기"], "a": 2, "e": "작업기억 = 청각적 부호화, 상표명 선정에 중요", "l": "6-1강"}, {"n": 45, "s": "6~7강", "q": "정보처리수준 모델(level of processing model)에 대한 설명으로 옳은 것은?", "o": ["감각·단기·장기 세 개의 저장소로 구성된다.", "하나의 기억저장소만 있으며, 처리 수준에 따라 용량이 다르게 배분된다.", "저장소마다 기능이 서로 다르다.", "감각기억을 거치지 않고 바로 장기기억에 저장된다."], "a": 1, "e": "①③은 다중기억구조모델", "l": "6-1강"}, {"n": 46, "s": "6~7강", "q": "작업기억의 제한된 용량 때문에 옛 정보가 밀려나 사라지는 망각을 무엇이라 하는가?", "o": ["간섭", "소멸", "순응", "대체"], "a": 3, "e": "시간 경과로 사라지는 것은 소멸", "l": "6-1강"}, {"n": 47, "s": "6~7강", "q": "정보의 의미를 생각하며 정보를 장기기억에 부호화시키려는 노력은?", "o": ["정교화 시연", "유지시연", "청킹", "재인"], "a": 0, "e": "유지시연은 의미 없는 단순 반복", "l": "6-1강"}, {"n": 48, "s": "6~7강", "q": "정보과부하 상태에서 소비자에게 나타나는 결과로 볼 수 없는 것은?", "o": ["단순임의선택", "아무것도 구매하지 않음", "잘못된 구매", "구매의 질 향상"], "a": 3, "e": "과부하 시 구매의 질이 떨어진다", "l": "6-1강"}, {"n": 49, "s": "6~7강", "q": "최신효과가 초두효과를 능가하는 경우로 강의에서 제시되지 않은 것은?", "o": ["초기 정보가 너무 일찍 제시되어 망각되었을 때", "최근의 정보가 현저하게 지각될 때", "목록의 처음에 중요한 정보가 반복 제시될 때", "인상 형성을 위해 충분히 고려할 시간이 주어졌을 때"], "a": 2, "e": "처음에 제시된 정보를 강조하면 오히려 초두효과가 커진다", "l": "6-1강"}, {"n": 50, "s": "6~7강", "q": "특정한 항목을 전에 본 적이 있는지 확인하는 인출 방식으로, 회상보다 더 구체적이고 유용한 것은?", "o": ["회상", "재인", "시연", "청킹"], "a": 1, "e": "회상은 최소 단서로 꺼내는 것", "l": "6-1강"}, {"n": 51, "s": "6~7강", "q": "한 브랜드가 새 슬로건을 낸 뒤, 소비자가 예전 슬로건을 잘 떠올리지 못하게 되었다. 이에 해당하는 것은?", "o": ["소멸", "순행간섭", "역행간섭", "자이가르닉 효과"], "a": 2, "e": "새 정보가 옛 정보를 방해 = 역행간섭", "l": "6-2강"}, {"n": 52, "s": "6~7강", "q": "간섭효과에 관한 연구가 주는 마케팅 시사점으로 옳은 것은?", "o": ["간섭은 친숙하지 않은 상표에서만 일어나므로, 시장에 먼저 진출해 친숙해지는 것이 중요하다.", "친숙한 상표일수록 간섭을 더 많이 받는다.", "유사한 형용사를 쓸수록 광고 학습이 촉진된다.", "간섭은 단기기억에서만 발생한다."], "a": 0, "e": "친숙하지 않은 상표에서만 간섭 → 선점·친숙함이 중요", "l": "6-2강"}, {"n": 53, "s": "6~7강", "q": "비교적 동질적인 항목들 중에서 독특한 항목이 훨씬 용이하게 회상되는 효과는?", "o": ["칵테일파티 효과", "초두효과", "자이가르닉 효과", "폰 레스토프 효과"], "a": 3, "e": "현저성의 중요성을 보여주는 폰 레스토프 효과", "l": "6-2강"}, {"n": 54, "s": "6~7강", "q": "자이가르닉 효과와 관련이 있는 지각의 체계화 원리는?", "o": ["근접성", "폐쇄성(완결성)", "유사성", "전경과 배경"], "a": 1, "e": "미완성 과제 회상 → 폐쇄성(완결성)", "l": "6-2강"}, {"n": 55, "s": "6~7강", "q": "파블로프의 개 실험에서, 조건형성이 끝난 뒤의 '종소리'는 무엇인가?", "o": ["무조건자극(UCS)", "무조건반응(UCR)", "조건자극(CS)", "조건반응(CR)"], "a": 2, "e": "중립자극이던 종소리가 조건자극이 됨", "l": "7-1강"}, {"n": 56, "s": "6~7강", "q": "고전적 조건화를 광고에 적용할 때, 인기 광고모델·음악·멋진 장소는 무엇에 해당하는가?", "o": ["무조건자극(UCS)", "조건자극(CS)", "조건반응(CR)", "중립자극"], "a": 0, "e": "상표·로고·슬로건이 CS, 모델·음악·장소가 UCS", "l": "7-1강"}, {"n": 57, "s": "6~7강", "q": "광고 싫증을 피하기 위해 주제·내용은 그대로 두고 배경·활자·광고모델만 바꾸는 방법은?", "o": ["실질변화", "표면변화", "자극차별화", "이차 조건형성"], "a": 1, "e": "실질변화는 표면은 두고 주제·내용을 변경", "l": "7-1강"}, {"n": 58, "s": "6~7강", "q": "자극일반화를 적용한 마케팅 사례가 아닌 것은?", "o": ["모방제품", "제품범주 확장", "인가(licensing)", "제품차별화"], "a": 3, "e": "제품차별화는 자극차별화의 적용", "l": "7-1강"}, {"n": 59, "s": "6~7강", "q": "고전적 조건형성의 마케팅 시사점으로 옳은 것은?", "o": ["매일 빈번하게 노출되는 광고에 특히 효과적이다.", "여러 형태의 매체로 다양하게 광고할수록 효과적이다.", "잘 노출되지 않는 신제품에 잘 작동하며, 단일매체에 집중하는 것이 좋다.", "무조건자극을 조건자극보다 먼저 제시해야 한다."], "a": 2, "e": "빈번한 광고·다매체에는 비효율. CS가 UCS보다 먼저 와야 함", "l": "7-1강"}, {"n": 60, "s": "6~7강", "q": "커피전문점에서 도장 10개를 모으면 무료 음료를 주는 쿠폰은 어떤 강화일정인가?", "o": ["변동비율", "고정간격", "변동간격", "고정비율"], "a": 3, "e": "일정한 횟수 = 고정비율", "l": "7-2강"}, {"n": 61, "s": "6~7강", "q": "부정적 강화의 사례로 가장 적절한 것은?", "o": ["두통약 광고", "스키너 상자의 먹이", "내 피부에 맞는 화장품", "칭찬"], "a": 0, "e": "두통(불쾌한 자극) 제거 = 부적 강화. 나머지는 긍정적 강화", "l": "7-2강"}, {"n": 62, "s": "6~7강", "q": "전체강화(연속강화)에 대한 설명으로 옳은 것은?", "o": ["학습은 느리지만 강화가 없어도 학습이 지속된다.", "학습 속도가 빠르고 신제품 출시에 쓰이지만, 강화가 끝나면 학습이 일어나지 않는다.", "대표적인 예는 로또이다.", "일부 시간에만 분산적으로 강화한다."], "a": 1, "e": "①③④는 부분강화", "l": "7-2강"}, {"n": 63, "s": "6~7강", "q": "반두라(Bandura)가 제시한 사회학습의 과정을 순서대로 나열한 것은?", "o": ["주의 → 기억 → 재생 → 동기화", "기억 → 주의 → 동기화 → 재생", "주의 → 재생 → 기억 → 동기화", "동기화 → 주의 → 기억 → 재생"], "a": 0, "e": "주의 → 기억 → 재생 → 동기화", "l": "7-2강"}, {"n": 64, "s": "6~7강", "q": "영화 속 배우에게 느낀 '든든함'이 그 배우가 광고하는 휴대폰에도 연결되는 현상은?", "o": ["자극일반화", "자극차별화", "이차 조건형성", "행동조성"], "a": 2, "e": "원빈(든든함) → 갤럭시폰 = 이차 조건형성", "l": "7-1강"}, {"n": 65, "s": "6~7강", "q": "조작적 조건형성을 소비자행동에 적용할 때의 문제점으로 옳은 것은?", "o": ["조건자극과 무조건자극을 동시에 제시하면 학습이 일어나지 않는다.", "시식코너·사은품 같은 손실제품은 행동조성에 쓸 수 없다.", "타인을 관찰하는 것만으로는 학습되지 않는다.", "외부 강화물에 지나치게 의존하면, 강화물이 없을 때 구매가 반복되지 않는다."], "a": 3, "e": "①은 고전적 조건화, ③은 사회학습과 관련. 손실제품은 행동조성의 수단", "l": "7-2강"}];
+const MARK = ['①','②','③','④'];
+const SECS = ['전체','1~3강','4~5강','6~7강'];
+const KEY = 'consumer-psy-qbank-v1';
+
+function load(){ try{ return JSON.parse(localStorage.getItem(KEY)) || {wrong:[], seen:{}}; }catch(e){ return {wrong:[], seen:{}}; } }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(store)); }catch(e){} }
+let store = load();
+
+const state = { sec:'전체', pool:'all', order:'seq', list:[], i:0, answers:{} };
+
+function chips(el, items, key){
+  el.innerHTML='';
+  items.forEach(([val,label])=>{
+    const b=document.createElement('button');
+    b.className='chip'+(state[key]===val?' on':'');
+    b.textContent=label;
+    b.onclick=()=>{ state[key]=val; renderSetup(); };
+    el.appendChild(b);
+  });
+}
+function filtered(){
+  let l = Q.filter(q=> state.sec==='전체' || q.s===state.sec);
+  if(state.pool==='wrong') l = l.filter(q=> store.wrong.includes(q.n));
+  if(state.pool==='new') l = l.filter(q=> !(q.n in store.seen));
+  return l;
+}
+function renderSetup(){
+  chips(document.getElementById('secChips'), SECS.map(s=>[s, s==='전체'?'전체 (65)':`${s} (${Q.filter(q=>q.s===s).length})`]), 'sec');
+  chips(document.getElementById('poolChips'), [['all','모든 문제'],['wrong',`오답노트 (${store.wrong.length})`],['new','안 푼 문제']], 'pool');
+  chips(document.getElementById('orderChips'), [['seq','번호순'],['rand','무작위']], 'order');
+  const n = filtered().length;
+  const sb = document.getElementById('startBtn');
+  sb.disabled = n===0;
+  sb.textContent = n ? `${n}문항 시작하기` : '해당하는 문제가 없습니다';
+  const seen = Object.keys(store.seen).length;
+  const right = Object.values(store.seen).filter(v=>v).length;
+  document.getElementById('stats').innerHTML =
+    `<span>푼 문제 ${seen}/65</span><span>· 최근 정답 ${right}</span><span>· 오답노트 ${store.wrong.length}</span>` +
+    (seen? ` <button class="link" id="resetBtn">기록 초기화</button>`:'');
+  const rb=document.getElementById('resetBtn');
+  if(rb) rb.onclick=()=>{ if(confirm('풀이 기록과 오답노트를 모두 지울까요?')){ store={wrong:[],seen:{}}; save(); renderSetup(); } };
+}
+function show(id){
+  ['setup','quiz','result'].forEach(s=>document.getElementById(s).classList.toggle('hidden', s!==id));
+  document.getElementById('homeBtn').classList.toggle('hidden', id==='setup');
+  window.scrollTo(0,0);
+}
+function start(list){
+  state.list = list.slice();
+  if(state.order==='rand') for(let i=state.list.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [state.list[i],state.list[j]]=[state.list[j],state.list[i]]; }
+  state.i=0; state.answers={};
+  show('quiz'); renderQ();
+}
+function renderQ(){
+  const q = state.list[state.i], total=state.list.length;
+  const picked = state.answers[q.n];
+  document.getElementById('pos').textContent = `${state.i+1} / ${total} · ${q.s}`;
+  const done = Object.keys(state.answers).length;
+  const ok = state.list.filter(x=>state.answers[x.n]===x.a).length;
+  document.getElementById('live').textContent = `맞힌 문제 ${ok} / 푼 문제 ${done}`;
+  document.getElementById('prog').style.width = (done/total*100)+'%';
+  document.getElementById('qtext').innerHTML = `<b>${q.n}.</b>${q.q}`;
+  const opts = document.getElementById('opts'); opts.innerHTML='';
+  q.o.forEach((t,k)=>{
+    const b=document.createElement('button');
+    b.className='opt';
+    b.textContent = `${MARK[k]} ${t}`;
+    if(picked!==undefined){
+      b.disabled=true;
+      if(k===q.a) b.classList.add('correct');
+      else if(k===picked) b.classList.add('wrong');
+    }
+    b.onclick=()=>answer(q,k);
+    opts.appendChild(b);
+  });
+  const fb=document.getElementById('fb');
+  if(picked===undefined){ fb.innerHTML=''; }
+  else{
+    const right = picked===q.a;
+    fb.innerHTML = `<div class="feedback ${right?'ok':'no'}"><strong>${right?'정답입니다':'오답입니다 · 정답 '+MARK[q.a]}</strong>${q.e}<br><small>근거: ${q.l}</small></div>`;
+  }
+  document.getElementById('prevBtn').disabled = state.i===0;
+  document.getElementById('nextBtn').textContent = state.i===total-1 ? '결과 보기' : '다음';
+}
+function answer(q,k){
+  if(state.answers[q.n]!==undefined) return;
+  state.answers[q.n]=k;
+  const right = k===q.a;
+  store.seen[q.n]=right;
+  if(right) store.wrong = store.wrong.filter(n=>n!==q.n);
+  else if(!store.wrong.includes(q.n)) store.wrong.push(q.n);
+  save(); renderQ();
+}
+function finish(){
+  const total=state.list.length;
+  const ok=state.list.filter(x=>state.answers[x.n]===x.a).length;
+  const wrong=state.list.filter(x=>state.answers[x.n]!==x.a);
+  document.getElementById('score').textContent = `${ok} / ${total}`;
+  const skipped = state.list.filter(x=>state.answers[x.n]===undefined).length;
+  document.getElementById('resultMsg').innerHTML = `<span>정답률 ${Math.round(ok/total*100)}%</span><span>${skipped?`안 푼 문제 ${skipped}개 포함`:''}</span>`;
+  const ul=document.getElementById('wrongList');
+  ul.innerHTML = wrong.map(q=>`<li><b>${q.n}.</b> ${q.q}<br><span>정답 ${MARK[q.a]} ${q.o[q.a]} · ${q.l}</span></li>`).join('');
+  document.getElementById('retryWrongBtn').disabled = wrong.length===0;
+  document.getElementById('retryWrongBtn').onclick=()=>{ state.order='seq'; start(wrong); };
+  show('result');
+}
+document.getElementById('startBtn').onclick=()=>start(filtered());
+document.getElementById('prevBtn').onclick=()=>{ if(state.i>0){ state.i--; renderQ(); window.scrollTo(0,0);} };
+document.getElementById('nextBtn').onclick=()=>{ if(state.i<state.list.length-1){ state.i++; renderQ(); window.scrollTo(0,0);} else finish(); };
+document.getElementById('againBtn').onclick=()=>{ show('setup'); renderSetup(); };
+document.getElementById('homeBtn').onclick=()=>{ show('setup'); renderSetup(); };
+document.addEventListener('keydown',e=>{
+  if(document.getElementById('quiz').classList.contains('hidden')) return;
+  const q=state.list[state.i];
+  if(['1','2','3','4'].includes(e.key)) answer(q, +e.key-1);
+  if(e.key==='ArrowRight') document.getElementById('nextBtn').click();
+  if(e.key==='ArrowLeft') document.getElementById('prevBtn').click();
+});
+renderSetup();
+</script>
+</body>
+</html>
